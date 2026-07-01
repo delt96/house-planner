@@ -1,6 +1,7 @@
 import express from 'express';
 import { itemsRouter } from './routes/items.js';
 import { candidatesRouter } from './routes/candidates.js';
+import { summaryRouter } from './routes/summary.js';
 
 export function createApp(pool) {
   const app = express();
@@ -10,6 +11,7 @@ export function createApp(pool) {
 
   app.use('/api', itemsRouter(pool));
   app.use('/api', candidatesRouter(pool));
+  app.use('/api', summaryRouter(pool));
 
   app.use((err, req, res, next) => {
     console.error(err);
