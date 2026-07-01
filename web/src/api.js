@@ -1,0 +1,32 @@
+const BASE = '/api';
+
+async function req(path, options) {
+  const res = await fetch(BASE + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!res.ok) {
+    let msg = 'Request failed';
+    try { const b = await res.json(); if (b?.error) msg = b.error; } catch {}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+export const api = {
+  getSummary: () => req('/summary'),
+  listItems: () => req('/items'),
+  getItem: (id) => req(`/items/${id}`),
+  createItem: (name) => req('/items', { method: 'POST', body: JSON.stringify({ name }) }),
+  updateItem: (id, data) => req(`/items/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteItem: (id) => req(`/items/${id}`, { method: 'DELETE' }),
+  addCandidate: (itemId, data) =>
+    req(`/items/${itemId}/candidates`, { method: 'POST', body: JSON.stringify(data) }),
+  updateCandidate: (id, data) =>
+    req(`/candidates/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteCandidate: (id) => req(`/candidates/${id}`, { method: 'DELETE' }),
+  confirm: (itemId, candidateId) =>
+    req(`/items/${itemId}/confirm`, { method: 'PUT', body: JSON.stringify({ candidate_id: candidateId }) }),
+  unconfirm: (itemId) => req(`/items/${itemId}/confirm`, { method: 'DELETE' }),
+};

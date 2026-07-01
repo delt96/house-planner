@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { itemsRouter } from './routes/items.js';
 import { candidatesRouter } from './routes/candidates.js';
 import { summaryRouter } from './routes/summary.js';
@@ -12,6 +14,13 @@ export function createApp(pool) {
   app.use('/api', itemsRouter(pool));
   app.use('/api', candidatesRouter(pool));
   app.use('/api', summaryRouter(pool));
+
+  const webDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'web', 'dist');
+  app.use(express.static(webDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(webDist, 'index.html'));
+  });
 
   app.use((err, req, res, next) => {
     console.error(err);

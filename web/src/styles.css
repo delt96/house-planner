@@ -1,0 +1,22 @@
+:root { color-scheme: light dark; font-family: system-ui, -apple-system, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.container { max-width: 720px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.5rem; }
+.summary { background: #f3f4f6; border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.error { color: #c0392b; }
+.add-row, .cand-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.add-row input, .cand-form input { flex: 1 1 140px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; }
+button { padding: 8px 12px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; }
+button.danger { background: #c0392b; }
+.item-list, .candidate-list { list-style: none; padding: 0; }
+.item-list li a { display: flex; justify-content: space-between; align-items: center;
+  padding: 14px; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 8px;
+  text-decoration: none; color: inherit; }
+.badge { font-size: 0.9rem; color: #6b7280; }
+.badge.confirmed { color: #059669; font-weight: 600; }
+.candidate-list li { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+.candidate-list li.confirmed { border-color: #059669; background: rgba(5,150,105,0.06); }
+.cand-head { display: flex; justify-content: space-between; font-weight: 600; }
+.cand-actions { display: flex; gap: 8px; margin-top: 8px; }
+.dims, .memo { color: #6b7280; font-size: 0.9rem; margin: 4px 0; }
