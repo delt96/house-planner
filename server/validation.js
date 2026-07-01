@@ -79,3 +79,17 @@ export function normalizeRoomInput(body, { partial = false } = {}) {
 
   return { errors, value: out };
 }
+
+export function normalizePlacementInput(body) {
+  const out = {};
+  const errors = [];
+  for (const key of ['x', 'y']) {
+    const n = Number(body[key]);
+    if (!Number.isFinite(n)) errors.push(`${key} must be a number`);
+    else out[key] = n;
+  }
+  const rot = body.rotation === undefined ? 0 : Number(body.rotation);
+  if (![0, 90, 180, 270].includes(rot)) errors.push('rotation must be 0, 90, 180, or 270');
+  else out.rotation = rot;
+  return { errors, value: out };
+}
