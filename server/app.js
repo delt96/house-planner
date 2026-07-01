@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { itemsRouter } from './routes/items.js';
 import { candidatesRouter } from './routes/candidates.js';
 import { summaryRouter } from './routes/summary.js';
+import { roomsRouter } from './routes/rooms.js';
 
 export function createApp(pool) {
   const app = express();
@@ -14,6 +15,7 @@ export function createApp(pool) {
   app.use('/api', itemsRouter(pool));
   app.use('/api', candidatesRouter(pool));
   app.use('/api', summaryRouter(pool));
+  app.use('/api', roomsRouter(pool));
 
   const webDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'web', 'dist');
   app.use(express.static(webDist));

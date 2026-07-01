@@ -49,3 +49,33 @@ export function normalizeCandidate(body, { partial = false } = {}) {
 
   return { errors, value: out };
 }
+
+export function normalizeRoomInput(body, { partial = false } = {}) {
+  const out = {};
+  const errors = [];
+
+  if (!partial || body.name !== undefined) {
+    if (typeof body.name !== 'string' || body.name.trim() === '') errors.push('Name is required');
+    else out.name = body.name.trim();
+  }
+
+  for (const [key, label] of [['width_cm', 'Width'], ['depth_cm', 'Depth']]) {
+    if (!partial || body[key] !== undefined) {
+      const n = Number(body[key]);
+      if (!(n > 0)) errors.push(`${label} must be a positive number`);
+      else out[key] = n;
+    }
+  }
+
+  for (const key of ['x', 'y']) {
+    if (body[key] !== undefined) {
+      const n = Number(body[key]);
+      if (!Number.isFinite(n)) errors.push(`${key} must be a number`);
+      else out[key] = n;
+    }
+  }
+
+  if (body.sort_order !== undefined) out.sort_order = Number(body.sort_order);
+
+  return { errors, value: out };
+}
