@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, test, expect, beforeEach } from 'vitest';
@@ -24,8 +24,8 @@ beforeEach(() => { vi.clearAllMocks(); });
 test('renders rooms, placed furniture, palette, and unplaceable', async () => {
   api.getLayout.mockResolvedValue(LAYOUT);
   render(<MemoryRouter><LayoutPage /></MemoryRouter>);
-  expect(await screen.findByText(/거실/)).toBeInTheDocument();
-  expect(screen.getByText('소파')).toBeInTheDocument();
+  expect(await screen.findByText('소파')).toBeInTheDocument();
+  expect(within(screen.getByTestId('room-list')).getByText(/거실/)).toBeInTheDocument();
   expect(screen.getByText(/식탁/)).toBeInTheDocument();
   expect(screen.getByText(/스탠드/)).toBeInTheDocument();
 });

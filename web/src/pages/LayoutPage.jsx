@@ -109,9 +109,9 @@ export function LayoutPage() {
                 onChange={(e) => setRoom({ ...room, depth_cm: e.target.value })} />
               <button type="submit">방 추가</button>
             </form>
-            <ul className="mini-list">
+            <ul className="mini-list" data-testid="room-list">
               {rooms.map((r) => (
-                <li key={r.id}>({r.width_cm}×{r.depth_cm}) <button className="danger" onClick={() => removeRoom(r.id)}>삭제</button></li>
+                <li key={r.id}>{r.name} ({r.width_cm}×{r.depth_cm}) <button className="danger" onClick={() => removeRoom(r.id)}>삭제</button></li>
               ))}
             </ul>
           </section>
