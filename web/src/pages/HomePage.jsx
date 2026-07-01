@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { won } from '../format.js';
 import { catKey, catColor, catSoft, catLabel } from '../categories.js';
-import { CategoryIcon } from '../icons.jsx';
+import { CategoryIcon, BrandIcon } from '../icons.jsx';
 
 const TARGET_KEY = 'honsu_budget_target';
 const DEFAULT_TARGET = 15000000;
@@ -78,7 +78,7 @@ export function HomePage() {
     <main className="container home">
       <header className="brand-bar">
         <div className="brand">
-          <span className="brand-mark">혼</span>
+          <span className="brand-mark"><BrandIcon size={18} /></span>
           <span className="brand-name">우리집 혼수</span>
         </div>
         <nav className="tabs">

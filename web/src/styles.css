@@ -136,8 +136,10 @@ body {
 .target-input { flex: none; width: 130px; min-height: 34px; padding: 6px 10px; }
 
 /* ---------- add row ---------- */
-.add-row { display: flex; gap: 9px; margin: 0 0 22px; }
-.add-row input { flex: 1 1 auto; }
+.add-row { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 22px; }
+.add-row input { flex: 1 1 220px; min-width: 0; }
+.add-row select { flex: 0 0 auto; }
+.add-row button { flex: 0 0 auto; }
 
 /* ---------- shared inputs/buttons ---------- */
 input, select {
@@ -150,7 +152,7 @@ input:hover, select:hover { border-color: var(--ink-5); }
 select { min-width: 92px; cursor: pointer; }
 
 button {
-  font: 700 14px var(--sans); padding: 0 22px; min-height: 46px;
+  font: 700 14px var(--sans); padding: 0 22px; min-height: 46px; white-space: nowrap;
   color: #fff; background: var(--rose); border: none; border-radius: 13px; cursor: pointer;
   transition: background var(--t), transform var(--t), box-shadow var(--t);
 }
@@ -320,4 +322,10 @@ h1.display { font-size: 22px; }
   .budget-total { font-size: 32px; }
   .panel { flex-direction: column; }
   .panel section { flex-basis: 100%; }
+  .add-row input { flex-basis: 100%; }
+  .add-row select { flex: 1 1 auto; }
+  .add-row button { flex: 0 0 auto; padding: 0 20px; }
+  .budget-top { flex-wrap: wrap; }
+  .budget-pills { width: 100%; }
+  .confirmed-price { min-width: 78px; }
 }

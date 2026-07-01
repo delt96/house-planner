@@ -59,3 +59,14 @@ export function CategoryIcon({ category, ...props }) {
   if (category === 'furniture') return <FurnitureIcon {...props} />;
   return <TagIcon {...props} />;
 }
+
+// Brand mark — a house with a heart (우리집 혼수).
+export function BrandIcon(props) {
+  return (
+    <Svg strokeWidth="1.9" {...props}>
+      <path d="M3 10.4 12 3l9 7.4" />
+      <path d="M5 9.4V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.4" />
+      <path d="M12 17.2c-1.8-1.3-2.9-2.3-2.9-3.6a1.6 1.6 0 0 1 2.9-.9 1.6 1.6 0 0 1 2.9.9c0 1.3-1.1 2.3-2.9 3.6z" />
+    </Svg>
+  );
+}
