@@ -75,7 +75,11 @@ export function normalizeRoomInput(body, { partial = false } = {}) {
     }
   }
 
-  if (body.sort_order !== undefined) out.sort_order = Number(body.sort_order);
+  if (body.sort_order !== undefined) {
+    const n = Number(body.sort_order);
+    if (Number.isFinite(n)) out.sort_order = n;
+    else errors.push('sort_order must be a number');
+  }
 
   return { errors, value: out };
 }

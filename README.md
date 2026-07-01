@@ -1,6 +1,7 @@
 # honsu-planner
 
-혼수 목록 & 예산 (Phase 1).
+혼수 목록 & 예산 관리 (Phase 1), 그리고 평면도 배치 (Phase 2).
+평면도 배치 화면은 `/layout`에서 확인할 수 있습니다 — 확정한 가구를 방 평면도에 드래그로 배치합니다.
 
 ## 실행
 1. PostgreSQL DB 생성 후 `.env` 작성 (`.env.example` 참고)
