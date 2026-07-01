@@ -2,14 +2,42 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { won } from '../format.js';
-import { CATEGORY_ORDER, CATEGORY_META, catKey } from '../categories.js';
+import { catKey, catColor, catSoft, catLabel } from '../categories.js';
 import { CategoryIcon } from '../icons.jsx';
+
+const TARGET_KEY = 'honsu_budget_target';
+const DEFAULT_TARGET = 15000000;
+
+function loadTarget() {
+  const v = Number(globalThis.localStorage?.getItem(TARGET_KEY));
+  return Number.isFinite(v) && v > 0 ? v : DEFAULT_TARGET;
+}
+
+function dimLabel(it) {
+  const { confirmed_width_cm: w, confirmed_depth_cm: d, confirmed_height_cm: h } = it;
+  if (!w && !d && !h) return '';
+  return [w, d, h].filter((n) => n != null).join(' × ');
+}
+
+function IconSquare({ category, size = 20, big = false }) {
+  const key = catKey(category);
+  return (
+    <span
+      className={big ? 'ico-sq ico-sq-lg' : 'ico-sq'}
+      style={{ background: catSoft(key), color: catColor(key) }}
+    >
+      <CategoryIcon category={key} size={size} />
+    </span>
+  );
+}
 
 export function HomePage() {
   const [summary, setSummary] = useState(null);
   const [items, setItems] = useState([]);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('appliance');
+  const [target, setTarget] = useState(loadTarget);
+  const [editingTarget, setEditingTarget] = useState(false);
   const [error, setError] = useState(null);
 
   async function load() {
@@ -19,7 +47,6 @@ export function HomePage() {
       setItems(list);
     } catch (e) { setError(e.message); }
   }
-
   useEffect(() => { load(); }, []);
 
   async function addItem(e) {
@@ -32,73 +59,135 @@ export function HomePage() {
     } catch (e) { setError(e.message); }
   }
 
-  const groups = CATEGORY_ORDER
-    .map((key) => ({ key, items: items.filter((it) => catKey(it.category) === key) }))
-    .filter((g) => g.items.length > 0);
+  function saveTarget(v) {
+    const n = Number(v);
+    if (Number.isFinite(n) && n > 0) {
+      setTarget(n);
+      globalThis.localStorage?.setItem(TARGET_KEY, String(n));
+    }
+    setEditingTarget(false);
+  }
+
+  const confirmed = items.filter((it) => it.confirmed_candidate_id);
+  const comparing = items.filter((it) => !it.confirmed_candidate_id);
+  const confirmedTotal = summary?.confirmed_total ?? 0;
+  const pct = target > 0 ? Math.min(100, Math.round((confirmedTotal / target) * 100)) : 0;
+  const remaining = Math.max(0, target - confirmedTotal);
 
   return (
-    <main className="container">
-      <header className="page-head">
-        <p className="eyebrow">우리의 혼수</p>
-        <h1 className="display">혼수 목록</h1>
-        <p className="nav"><Link to="/layout">평면도 배치 →</Link></p>
+    <main className="container home">
+      <header className="brand-bar">
+        <div className="brand">
+          <span className="brand-mark">혼</span>
+          <span className="brand-name">우리집 혼수</span>
+        </div>
+        <nav className="tabs">
+          <span className="tab active">목록</span>
+          <Link to="/layout" className="tab">평면도</Link>
+        </nav>
       </header>
 
-      {summary && (
-        <div className="summary" role="status">
-          <span className="summary-label">확정 합계</span>
-          <strong>{won(summary.confirmed_total)}</strong>
-          <span className="summary-sub">아직 정하지 않은 항목 {summary.unconfirmed_count}건</span>
-        </div>
-      )}
       {error && <p className="error">{error}</p>}
+
+      {summary && (
+        <section className="budget-card">
+          <div className="budget-top">
+            <div>
+              <div className="budget-label">확정 합계</div>
+              <div className="budget-total num">{won(confirmedTotal)}</div>
+            </div>
+            <div className="budget-pills">
+              <span className="pill pill-rose">확정 {confirmed.length}</span>
+              <span className="pill pill-gray">비교중 {comparing.length}</span>
+            </div>
+          </div>
+          <div className="progress"><div className="progress-fill" style={{ width: `${pct}%` }} /></div>
+          <div className="budget-foot">
+            <span className="budget-pct">{pct}% 달성</span>
+            {editingTarget ? (
+              <input
+                className="target-input num"
+                type="number"
+                defaultValue={target}
+                aria-label="목표 예산"
+                autoFocus
+                onBlur={(e) => saveTarget(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveTarget(e.target.value); }}
+              />
+            ) : (
+              <button type="button" className="target-btn" onClick={() => setEditingTarget(true)}>
+                목표 <span className="num">{won(target)}</span> · 남은 <span className="num">{won(remaining)}</span>
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       <form onSubmit={addItem} className="add-row">
         <input
           aria-label="새 항목 이름"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="예: 냉장고"
+          placeholder="새 항목 추가 · 예: 공기청정기"
         />
         <select aria-label="분류" value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="appliance">가전</option>
           <option value="furniture">가구</option>
         </select>
-        <button type="submit">＋ 항목 추가</button>
+        <button type="submit">＋ 추가</button>
       </form>
 
       {items.length === 0 && (
         <p className="empty">아직 항목이 없어요. 필요한 가전·가구를 하나씩 적어보세요.</p>
       )}
 
-      {groups.map((g) => (
-        <section key={g.key} className="item-group">
-          <div className="group-head" style={{ color: CATEGORY_META[g.key].color }}>
-            <CategoryIcon category={g.key} size={18} />
-            <h2 className="group-title">{CATEGORY_META[g.key].label}</h2>
-            <span className="group-count">{g.items.length}</span>
+      {comparing.length > 0 && (
+        <section className="section">
+          <div className="section-head">
+            <h2 className="section-title">정하는 중</h2>
+            <span className="count-chip count-rose">{comparing.length}</span>
+            <span className="section-hint">후보를 비교하고 확정하세요</span>
           </div>
-          <ul className="item-list">
-            {g.items.map((it) => (
-              <li key={it.id}>
-                <Link to={`/items/${it.id}`}>
-                  <span className="item-main">
-                    <span className="cat-mark" style={{ color: CATEGORY_META[catKey(it.category)].color }}>
-                      <CategoryIcon category={catKey(it.category)} size={16} />
-                    </span>
-                    <span className="item-name">{it.name}</span>
-                  </span>
-                  {it.confirmed_candidate_id ? (
-                    <span className="badge confirmed">✅ {won(it.confirmed_price)}</span>
-                  ) : (
-                    <span className="badge">⚪ 비교중</span>
-                  )}
-                </Link>
-              </li>
+          <div className="compare-list">
+            {comparing.map((it) => (
+              <Link key={it.id} to={`/items/${it.id}`} className="compare-card">
+                <IconSquare category={it.category} />
+                <div className="compare-main">
+                  <div className="compare-name">{it.name}</div>
+                  <div className="compare-spec">{catLabel(it.category)}</div>
+                </div>
+                <span className="status-chip">
+                  {it.candidate_count > 0 ? `후보 ${it.candidate_count}개` : '비교중'}
+                </span>
+                <span className="compare-go">비교 →</span>
+              </Link>
             ))}
-          </ul>
+          </div>
         </section>
-      ))}
+      )}
+
+      {confirmed.length > 0 && (
+        <section className="section">
+          <div className="section-head">
+            <h2 className="section-title">확정 완료</h2>
+            <span className="count-chip count-gray">{confirmed.length}</span>
+            <span className="section-total num">합계 {won(confirmedTotal)}</span>
+          </div>
+          <div className="confirmed-list">
+            {confirmed.map((it) => (
+              <Link key={it.id} to={`/items/${it.id}`} className="confirmed-row">
+                <IconSquare category={it.category} size={17} />
+                <div className="confirmed-main">
+                  <div className="confirmed-name">{it.name}</div>
+                  {it.confirmed_name && <div className="confirmed-store">{it.confirmed_name}</div>}
+                </div>
+                {dimLabel(it) && <span className="dim-chip num">{dimLabel(it)}</span>}
+                <div className="confirmed-price num">{won(it.confirmed_price)}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

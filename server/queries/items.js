@@ -1,15 +1,25 @@
 export async function listItems(pool) {
   const { rows } = await pool.query(
     `SELECT i.id, i.name, i.category, i.sort_order, i.confirmed_candidate_id, i.created_at,
-            c.name AS confirmed_name, c.price AS confirmed_price
+            c.name AS confirmed_name, c.price AS confirmed_price,
+            c.width_cm AS confirmed_width_cm, c.depth_cm AS confirmed_depth_cm,
+            c.height_cm AS confirmed_height_cm
      FROM items i
      LEFT JOIN candidates c ON c.id = i.confirmed_candidate_id
      ORDER BY i.sort_order, i.id`
   );
+  const { rows: counts } = await pool.query(
+    'SELECT item_id, COUNT(*) AS n FROM candidates GROUP BY item_id'
+  );
+  const countBy = new Map(counts.map((r) => [r.item_id, Number(r.n)]));
+  const num = (v) => (v === null || v === undefined ? null : Number(v));
   return rows.map((r) => ({
     ...r,
-    confirmed_price: r.confirmed_price === null || r.confirmed_price === undefined
-      ? null : Number(r.confirmed_price),
+    confirmed_price: num(r.confirmed_price),
+    confirmed_width_cm: num(r.confirmed_width_cm),
+    confirmed_depth_cm: num(r.confirmed_depth_cm),
+    confirmed_height_cm: num(r.confirmed_height_cm),
+    candidate_count: countBy.get(r.id) ?? 0,
   }));
 }
 

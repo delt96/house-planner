@@ -30,7 +30,7 @@ test('shows candidates and confirm action', async () => {
   });
   renderAt(1);
   expect(await screen.findByText('LG')).toBeInTheDocument();
-  expect(screen.getByText('1,200,000원')).toBeInTheDocument();
+  expect(screen.getAllByText('1,200,000원').length).toBeGreaterThan(0);
   expect(screen.getByText('이걸로 확정')).toBeInTheDocument();
 });
 

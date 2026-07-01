@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { won } from '../format.js';
-import { catKey, catColor } from '../categories.js';
+import { catKey, catColor, catSoft, catLabel } from '../categories.js';
 import { CategoryIcon } from '../icons.jsx';
 
 const EMPTY = { name: '', price: '', url: '', memo: '', width_cm: '', depth_cm: '', height_cm: '' };
@@ -17,7 +17,6 @@ export function ItemDetailPage() {
   async function load() {
     try { setItem(await api.getItem(itemId)); } catch (e) { setError(e.message); }
   }
-
   useEffect(() => { load(); }, [itemId]);
 
   async function addCandidate(e) {
@@ -43,59 +42,108 @@ export function ItemDetailPage() {
   if (!item) {
     return (
       <main className="container">
-        <Link to="/">← 목록</Link>
+        <Link to="/" className="back">← 목록</Link>
         {error && <p className="error">{error}</p>}
       </main>
     );
   }
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const key = catKey(item.category);
+
+  const priced = item.candidates.filter((c) => c.price != null);
+  const minP = priced.length ? Math.min(...priced.map((c) => c.price)) : null;
+  const maxP = priced.length ? Math.max(...priced.map((c) => c.price)) : null;
+  const cheapestId = priced.length
+    ? priced.reduce((a, b) => (a.price <= b.price ? a : b)).id
+    : null;
+  const confirmedCand = item.candidates.find((c) => c.id === item.confirmed_candidate_id);
+  const posOf = (p) => (maxP > minP ? ((p - minP) / (maxP - minP)) * 100 : 0);
+
+  function dims(c) {
+    if (!c.width_cm && !c.depth_cm && !c.height_cm) return null;
+    return `${c.width_cm ?? '—'} × ${c.depth_cm ?? '—'} × ${c.height_cm ?? '—'} cm`;
+  }
 
   return (
-    <main className="container">
-      <Link to="/">← 목록</Link>
-      <div className="detail-head">
-        <h1 className="display">{item.name}</h1>
+    <main className="container detail">
+      <Link to="/" className="back">← 목록</Link>
+
+      <header className="detail-head">
+        <span className="ico-sq ico-sq-lg" style={{ background: catSoft(key), color: catColor(key) }}>
+          <CategoryIcon category={key} size={24} />
+        </span>
+        <div className="detail-titles">
+          <h1 className="detail-name">{item.name}</h1>
+          <div className="detail-sub">{catLabel(item.category)} · 후보 {item.candidates.length}</div>
+        </div>
         <label className="cat-select">
-          <span className="cat-mark" style={{ color: catColor(item.category) }}>
-            <CategoryIcon category={catKey(item.category)} size={16} />
-          </span>
           <select aria-label="분류 변경" value={item.category ?? ''} onChange={changeCategory}>
             <option value="">미분류</option>
             <option value="appliance">가전</option>
             <option value="furniture">가구</option>
           </select>
         </label>
-      </div>
+      </header>
+
       {error && <p className="error">{error}</p>}
-      <ul className="candidate-list">
+
+      {priced.length > 0 && (
+        <section className="price-range">
+          <div className="pr-head">
+            <span className="pr-label">후보 가격대</span>
+            <span className="pr-minmax">
+              최저 <b className="num pr-low">{minP.toLocaleString('ko-KR')}</b> ~ 최고{' '}
+              <b className="num">{maxP.toLocaleString('ko-KR')}원</b>
+            </span>
+          </div>
+          <div className="pr-track">
+            <span className="pr-dot pr-dot-low" style={{ left: '0%' }} />
+            {confirmedCand?.price != null && (
+              <span className="pr-dot pr-dot-conf" style={{ left: `${posOf(confirmedCand.price)}%` }} />
+            )}
+            <span className="pr-dot pr-dot-high" style={{ left: '100%' }} />
+          </div>
+          <div className="pr-legend">
+            <span><span className="dot dot-low" />최저가</span>
+            <span><span className="dot dot-conf" />확정</span>
+          </div>
+        </section>
+      )}
+
+      <div className="cand-list">
         {item.candidates.map((c) => {
           const isConfirmed = c.id === item.confirmed_candidate_id;
+          const isCheapest = c.id === cheapestId && !isConfirmed;
+          const d = dims(c);
           return (
-            <li key={c.id} className={isConfirmed ? 'confirmed' : ''}>
-              <div className="cand-head">
-                <span className="cand-name">{isConfirmed && '⭐ '}{c.name}</span>
-                <span className="cand-price">{won(c.price)}</span>
+            <div key={c.id} className={`cand-card${isConfirmed ? ' confirmed' : ''}`}>
+              {isConfirmed && <span className="conf-pill">✓ 확정된 후보</span>}
+              <div className="cand-top">
+                <div className="cand-title">
+                  <span className="cand-name">{c.name}</span>
+                  {isCheapest && <span className="cheapest-chip">최저가</span>}
+                </div>
+                <span className={`cand-price num${isConfirmed ? ' price-conf' : ''}`}>{won(c.price)}</span>
               </div>
-              {c.url && <a href={c.url} target="_blank" rel="noreferrer">링크</a>}
-              {c.memo && <p className="memo">{c.memo}</p>}
-              {(c.width_cm || c.depth_cm || c.height_cm) && (
-                <p className="dims">
-                  {c.width_cm ?? '—'} × {c.depth_cm ?? '—'} × {c.height_cm ?? '—'} cm
-                </p>
-              )}
+              {d && <div className="chip-row"><span className="spec-chip num">{d}</span></div>}
+              {c.memo && <p className="cand-memo">{c.memo}</p>}
               <div className="cand-actions">
                 {isConfirmed ? (
-                  <button onClick={unconfirm}>확정 해제</button>
+                  <button className="btn-unconfirm" onClick={unconfirm}>확정 해제</button>
                 ) : (
-                  <button onClick={() => confirm(c.id)}>이걸로 확정</button>
+                  <button className="btn-confirm" onClick={() => confirm(c.id)}>이걸로 확정</button>
                 )}
-                <button onClick={() => removeCandidate(c.id)} className="danger">삭제</button>
+                {c.url && (
+                  <a className="btn-link" href={c.url} target="_blank" rel="noreferrer">링크 ↗</a>
+                )}
+                <button className="danger" onClick={() => removeCandidate(c.id)}>삭제</button>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
+
       <form onSubmit={addCandidate} className="cand-form">
         <h2>후보 추가</h2>
         <input aria-label="후보 이름" placeholder="이름" value={form.name} onChange={set('name')} />
