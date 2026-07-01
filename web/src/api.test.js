@@ -22,3 +22,22 @@ test('deleteItem returns null on 204', async () => {
   global.fetch.mockResolvedValue({ ok: true, status: 204 });
   await expect(api.deleteItem(1)).resolves.toBeNull();
 });
+
+test('getLayout GETs /api/layout', async () => {
+  global.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({ rooms: [], placements: [], palette: [], unplaceable: [] }) });
+  const r = await api.getLayout();
+  expect(global.fetch).toHaveBeenCalledWith('/api/layout', expect.objectContaining({}));
+  expect(r).toEqual({ rooms: [], placements: [], palette: [], unplaceable: [] });
+});
+
+test('placeItem PUTs the placement body', async () => {
+  global.fetch.mockResolvedValue({ ok: true, status: 200, json: async () => ({ item_id: 1, x: 10, y: 10, rotation: 0 }) });
+  await api.placeItem(1, { x: 10, y: 10, rotation: 0 });
+  expect(global.fetch).toHaveBeenCalledWith('/api/items/1/placement', expect.objectContaining({ method: 'PUT', body: JSON.stringify({ x: 10, y: 10, rotation: 0 }) }));
+});
+
+test('createRoom POSTs to /api/rooms', async () => {
+  global.fetch.mockResolvedValue({ ok: true, status: 201, json: async () => ({ id: 1, name: '거실' }) });
+  await api.createRoom({ name: '거실', width_cm: 400, depth_cm: 500 });
+  expect(global.fetch).toHaveBeenCalledWith('/api/rooms', expect.objectContaining({ method: 'POST' }));
+});

@@ -32,6 +32,7 @@ export function HomePage() {
   return (
     <main className="container">
       <h1>혼수 목록</h1>
+      <p className="nav"><Link to="/layout">평면도 배치 →</Link></p>
       {summary && (
         <div className="summary" role="status">
           확정 합계 <strong>{won(summary.confirmed_total)}</strong> · 미확정 {summary.unconfirmed_count}건

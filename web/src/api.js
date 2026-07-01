@@ -29,4 +29,10 @@ export const api = {
   confirm: (itemId, candidateId) =>
     req(`/items/${itemId}/confirm`, { method: 'PUT', body: JSON.stringify({ candidate_id: candidateId }) }),
   unconfirm: (itemId) => req(`/items/${itemId}/confirm`, { method: 'DELETE' }),
+  getLayout: () => req('/layout'),
+  createRoom: (data) => req('/rooms', { method: 'POST', body: JSON.stringify(data) }),
+  updateRoom: (id, data) => req(`/rooms/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteRoom: (id) => req(`/rooms/${id}`, { method: 'DELETE' }),
+  placeItem: (itemId, data) => req(`/items/${itemId}/placement`, { method: 'PUT', body: JSON.stringify(data) }),
+  unplaceItem: (itemId) => req(`/items/${itemId}/placement`, { method: 'DELETE' }),
 };
