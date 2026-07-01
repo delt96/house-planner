@@ -1,4 +1,5 @@
 import express from 'express';
+import { itemsRouter } from './routes/items.js';
 
 export function createApp(pool) {
   const app = express();
@@ -6,7 +7,7 @@ export function createApp(pool) {
 
   app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-  // Routers are mounted here in later tasks.
+  app.use('/api', itemsRouter(pool));
 
   app.use((err, req, res, next) => {
     console.error(err);
