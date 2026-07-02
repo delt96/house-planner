@@ -188,6 +188,13 @@ button:active { transform: translateY(1px); }
 .compare-name { font: 600 14.5px var(--sans); color: var(--ink); }
 .compare-spec { font: 400 12px var(--sans); color: var(--ink-4); margin-top: 3px; }
 .status-chip { flex: none; font: 600 11.5px var(--sans); color: var(--ink-2); background: var(--chip); border-radius: var(--pill); padding: 6px 11px; }
+.detail-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.btn-del-item {
+  flex: none; font: 600 13px var(--sans); color: var(--danger);
+  background: transparent; border: 1px solid var(--danger-border); border-radius: 10px;
+  min-height: 36px; padding: 0 14px; transition: background var(--t), border-color var(--t);
+}
+.btn-del-item:hover { background: var(--rose-soft); border-color: var(--danger); }
 .compare-go { flex: none; font: 700 12.5px var(--sans); color: var(--rose); background: var(--surface); border: 1.5px solid var(--rose-border); border-radius: var(--pill); padding: 7px 13px; }
 
 /* 확정 완료 rows */

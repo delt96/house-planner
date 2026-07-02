@@ -9,7 +9,7 @@ vi.mock('../api.js', () => ({
   api: {
     getItem: vi.fn(), addCandidate: vi.fn(), confirm: vi.fn(),
     unconfirm: vi.fn(), deleteCandidate: vi.fn(), updateItem: vi.fn(),
-    updateCandidate: vi.fn(), getHomeSettings: vi.fn(),
+    updateCandidate: vi.fn(), getHomeSettings: vi.fn(), deleteItem: vi.fn(),
   },
 }));
 
@@ -46,6 +46,16 @@ test('confirm calls api and reloads', async () => {
   await screen.findByText('LG');
   await userEvent.click(screen.getByText('이걸로 확정'));
   await waitFor(() => expect(api.confirm).toHaveBeenCalledWith(1, 5));
+});
+
+test('deletes the whole item after confirmation', async () => {
+  api.getItem.mockResolvedValue({ id: 1, name: '냉장고', confirmed_candidate_id: null, candidates: [] });
+  api.deleteItem.mockResolvedValue(null);
+  const confirmSpy = vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
+  renderAt(1);
+  await userEvent.click(await screen.findByText('항목 삭제'));
+  await waitFor(() => expect(api.deleteItem).toHaveBeenCalledWith(1));
+  confirmSpy.mockRestore();
 });
 
 test('adds a candidate', async () => {

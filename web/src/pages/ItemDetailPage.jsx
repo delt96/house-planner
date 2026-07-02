@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { won, commas, digitsOnly } from '../format.js';
 import { catKey, catColor, catSoft, catLabel } from '../categories.js';
@@ -17,6 +17,7 @@ function editValues(c) {
 
 export function ItemDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const itemId = Number(id);
   const [item, setItem] = useState(null);
   const [settings, setSettings] = useState(null);
@@ -58,6 +59,11 @@ export function ItemDetailPage() {
     try { await api.updateItem(itemId, { category: value }); await load(); }
     catch (e) { setError(e.message); }
   }
+  async function removeItem() {
+    if (!globalThis.confirm(`'${item.name}' 항목을 삭제할까요?\n후보와 배치 정보도 함께 삭제됩니다.`)) return;
+    try { await api.deleteItem(itemId); navigate('/'); }
+    catch (e) { setError(e.message); }
+  }
 
   if (!item) {
     return (
@@ -90,7 +96,10 @@ export function ItemDetailPage() {
 
   return (
     <main className="container detail">
-      <Link to="/" className="back">← 목록</Link>
+      <div className="detail-top">
+        <Link to="/" className="back">← 목록</Link>
+        <button type="button" className="btn-del-item" onClick={removeItem}>항목 삭제</button>
+      </div>
 
       <header className="detail-head">
         <span className="ico-sq ico-sq-lg" style={{ background: catSoft(key), color: catColor(key) }}>
