@@ -30,3 +30,15 @@ test('saves entered dimensions and shows a confirmation', async () => {
   );
   expect(await screen.findByText('저장됨 ✓')).toBeInTheDocument();
 });
+
+test('shows and saves the room door fields', async () => {
+  api.getHomeSettings.mockResolvedValue({ id: 1, room_door_width_cm: 75 });
+  api.saveHomeSettings.mockResolvedValue({ id: 1, room_door_width_cm: 75, room_door_height_cm: 198 });
+  render(<MemoryRouter><CarryInPage /></MemoryRouter>);
+  await waitFor(() => expect(screen.getByLabelText('방문 폭')).toHaveValue('75'));
+  await userEvent.type(screen.getByLabelText('방문 높이'), '198');
+  await userEvent.click(screen.getByRole('button', { name: '저장' }));
+  await waitFor(() =>
+    expect(api.saveHomeSettings).toHaveBeenCalledWith(expect.objectContaining({ room_door_height_cm: '198' }))
+  );
+});

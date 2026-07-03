@@ -4,6 +4,7 @@ import { Tabs } from '../Tabs.jsx';
 
 const SETTING_FIELDS = [
   'door_width_cm', 'door_height_cm',
+  'room_door_width_cm', 'room_door_height_cm',
   'elevator_door_width_cm', 'elevator_door_height_cm',
   'elevator_car_width_cm', 'elevator_car_depth_cm', 'elevator_car_height_cm',
 ];
@@ -44,6 +45,11 @@ export function CarryInPage() {
           <input aria-label="현관문 높이" placeholder="높이(cm)" value={form.door_height_cm} onChange={set('door_height_cm')} />
         </fieldset>
         <fieldset className="carry-group">
+          <legend>방문 (실내에서 가장 좁은 문)</legend>
+          <input aria-label="방문 폭" placeholder="폭(cm)" value={form.room_door_width_cm} onChange={set('room_door_width_cm')} />
+          <input aria-label="방문 높이" placeholder="높이(cm)" value={form.room_door_height_cm} onChange={set('room_door_height_cm')} />
+        </fieldset>
+        <fieldset className="carry-group">
           <legend>엘리베이터 문</legend>
           <input aria-label="엘베문 폭" placeholder="폭(cm)" value={form.elevator_door_width_cm} onChange={set('elevator_door_width_cm')} />
           <input aria-label="엘베문 높이" placeholder="높이(cm)" value={form.elevator_door_height_cm} onChange={set('elevator_door_height_cm')} />
@@ -61,8 +67,8 @@ export function CarryInPage() {
       </form>
 
       <p className="carry-hint">
-        입력한 현관·엘리베이터 치수를 확정 가구의 치수와 비교해, 목록·품목 화면에서 반입 가능/불가를 알려드려요.
-        비워 둔 항목은 판정에서 제외됩니다.
+        입력한 현관·방문·엘리베이터 치수를 확정 가구의 치수와 비교해, 목록·품목 화면에서 반입 가능/불가를 알려드려요.
+        방문은 실내에서 가장 좁은 문 하나를 재면 됩니다. 비워 둔 항목은 판정에서 제외됩니다.
       </p>
     </main>
   );
