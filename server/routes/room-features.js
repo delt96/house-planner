@@ -25,7 +25,7 @@ export function roomFeaturesRouter(pool) {
       const existing = await features.getFeature(pool, id);
       if (!existing) return res.status(404).json({ error: 'Feature not found' });
       const room = await getRoom(pool, existing.room_id);
-      // 부분 수정: 기존 행 위에 body를 병합한 뒤 전체 검증
+      // Partial update: merge body onto the existing row, then fully re-validate
       const { errors, value } = normalizeRoomFeature({ ...existing, ...req.body }, room);
       if (errors.length) return res.status(400).json({ error: errors.join(', ') });
       res.json(await features.updateFeature(pool, id, value));

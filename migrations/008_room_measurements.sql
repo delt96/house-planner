@@ -1,6 +1,6 @@
--- 방별 실측: 천장 높이(방마다 다를 수 있음) + 벽 부착물(문·창문·콘센트).
--- 부착물은 벽 앵커 방식: 어느 벽(N/E/S/W) + 그 벽 시작 모서리에서 거리(cm).
--- offset 0점 규약 — N/S 벽: 서쪽(왼쪽) 모서리, E/W 벽: 북쪽(위) 모서리.
+-- Per-room measurements: ceiling height (can differ per room) + wall features (door/window/outlet).
+-- Features use a wall-anchor scheme: which wall (N/E/S/W) + distance (cm) from that wall's start corner.
+-- offset zero-point convention — N/S walls: west (left) corner, E/W walls: north (top) corner.
 ALTER TABLE rooms ADD COLUMN ceiling_height_cm numeric;
 
 CREATE TABLE room_features (

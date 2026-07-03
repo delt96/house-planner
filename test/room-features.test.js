@@ -31,7 +31,7 @@ test('POST rejects a bad wall and a feature past the wall end', async () => {
   const badWall = await request(app).post(`/api/rooms/${room.id}/features`)
     .send({ kind: 'outlet', wall: 'X', offset_cm: 10 });
   expect(badWall.status).toBe(400);
-  // S벽 길이 = width_cm 400 < 350 + 80
+  // S-wall length = width_cm 400 < 350 + 80
   const past = await request(app).post(`/api/rooms/${room.id}/features`)
     .send({ kind: 'window', wall: 'S', offset_cm: 350, width_cm: 80 });
   expect(past.status).toBe(400);
@@ -45,7 +45,7 @@ test('PATCH merges over the existing row and re-validates', async () => {
     .send({ kind: 'window', wall: 'N', offset_cm: 90, width_cm: 180, height_cm: 120, sill_height_cm: 90 })).body;
   const res = await request(app).patch(`/api/features/${f.id}`).send({ offset_cm: 100 });
   expect(res.status).toBe(200);
-  expect(res.body).toMatchObject({ offset_cm: 100, width_cm: 180, sill_height_cm: 90 }); // 나머지 유지
+  expect(res.body).toMatchObject({ offset_cm: 100, width_cm: 180, sill_height_cm: 90 }); // rest unchanged
   const tooFar = await request(app).patch(`/api/features/${f.id}`).send({ offset_cm: 250 });
   expect(tooFar.status).toBe(400); // 250 + 180 > 400
 });

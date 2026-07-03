@@ -153,9 +153,9 @@ export const FEATURE_KINDS = ['door', 'window', 'outlet'];
 export const FEATURE_WALLS = ['N', 'E', 'S', 'W'];
 export const DOOR_SWINGS = ['in-left', 'in-right', 'out-left', 'out-right'];
 
-// 방 부착물(문·창문·콘센트) 전체 검증. room은 벽 길이 검증용 { width_cm, depth_cm }.
-// 부분 수정(PATCH)은 라우트에서 기존 행 위에 body를 병합한 뒤 이 함수를 호출한다.
-// kind에 무관한 치수 필드는 에러 대신 null로 정리해 예측 가능하게 만든다.
+// Full validation of a room feature (door/window/outlet). room is { width_cm, depth_cm } for wall-length checks.
+// Partial updates (PATCH) are handled by the route, which merges body onto the existing row before calling this.
+// Dimension fields that don't apply to the given kind are cleared to null instead of erroring, for predictability.
 export function normalizeRoomFeature(body, room) {
   const errors = [];
   const out = {};

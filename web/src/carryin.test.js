@@ -58,7 +58,7 @@ test('fail when the item does not fit inside the elevator car', () => {
 });
 
 test('fail when the cross-section cannot pass the room door', () => {
-  // 단면 75×80: 90×210 현관문은 통과하지만 폭 70cm 방문은 두 방향 모두 불가
+  // cross-section 75×80: passes the 90×210 front door, but fails a 70cm-wide room door in both orientations
   const r = evaluateCarryIn(
     { width_cm: 200, depth_cm: 80, height_cm: 75 },
     { door_width_cm: 90, door_height_cm: 210, room_door_width_cm: 70, room_door_height_cm: 198 }
@@ -76,7 +76,7 @@ test('room door check is skipped when its dimensions are not entered', () => {
 });
 
 test('tight when the room door leaves less than the clearance margin', () => {
-  // 단면 68×88 → 70×90 방문: 여유 2cm (< 3cm)
+  // cross-section 68×88 → 70×90 room door: 2cm margin (< 3cm)
   const r = evaluateCarryIn(
     { width_cm: 300, depth_cm: 88, height_cm: 68 },
     { room_door_width_cm: 70, room_door_height_cm: 90 }

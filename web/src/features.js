@@ -1,4 +1,4 @@
-// 방 부착물(문·창문·콘센트) 표시용 메타/문자열 헬퍼. 프레임워크 무관.
+// Display metadata/string helpers for room features (door/window/outlet). Framework-agnostic.
 
 export const WALLS = ['N', 'E', 'S', 'W'];
 export const WALL_LABEL = { N: '북쪽', E: '동쪽', S: '남쪽', W: '서쪽' };
@@ -12,7 +12,7 @@ export const FEATURE_META = {
   outlet: { label: '콘센트', icon: '⚡' },
 };
 
-// 패널 한 줄 요약: "남쪽 · 모서리 30cm · 폭80 · 높이204 · 안·좌"
+// One-line panel summary: "남쪽 · 모서리 30cm · 폭80 · 높이204 · 안·좌"
 export function featureSummary(f) {
   const parts = [WALL_LABEL[f.wall], `모서리 ${f.offset_cm}cm`];
   if (f.width_cm != null) parts.push(`폭${f.width_cm}`);
@@ -23,7 +23,7 @@ export function featureSummary(f) {
   return parts.join(' · ');
 }
 
-// 평면도 기호 클릭 칩. 수직(높이) 정보는 위에서 본 도면에 못 그리므로 여기로 분리한다.
+// Click chip for the floor-plan symbol. Vertical (height) info can't be drawn on a top-down plan, so it's split out here.
 export function featureChip(f) {
   const parts = [];
   if (f.width_cm != null) parts.push(`W${f.width_cm}`);

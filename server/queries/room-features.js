@@ -1,4 +1,4 @@
-// 방 부착물(문·창문·콘센트). 벽 앵커: wall(N/E/S/W) + offset_cm(모서리에서 거리).
+// Room features (door/window/outlet). Wall anchor: wall (N/E/S/W) + offset_cm (distance from the corner).
 
 const NUM_COLS = ['offset_cm', 'width_cm', 'height_cm', 'sill_height_cm', 'floor_height_cm'];
 
@@ -27,7 +27,7 @@ export async function createFeature(pool, roomId, f) {
   return normalizeFeatureRow(rows[0]);
 }
 
-// 라우트가 병합+전체검증을 하므로 항상 전체 행을 덮어쓴다.
+// The route merges + fully validates, so this always overwrites the whole row.
 export async function updateFeature(pool, id, f) {
   const { rows } = await pool.query(
     `UPDATE room_features
