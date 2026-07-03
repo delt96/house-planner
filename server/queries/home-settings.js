@@ -21,8 +21,16 @@ export function normalizeHomeSettingsRow(r) {
 }
 
 export async function getHomeSettings(pool) {
-  const { rows } = await pool.query('SELECT * FROM home_settings WHERE id = 1');
-  return rows[0] ? normalizeHomeSettingsRow(rows[0]) : null;
+  const [settings, ceiling] = await Promise.all([
+    pool.query('SELECT * FROM home_settings WHERE id = 1'),
+    pool.query('SELECT MIN(ceiling_height_cm) AS min_ceiling FROM rooms'),
+  ]);
+  if (!settings.rows[0]) return null;
+  const out = normalizeHomeSettingsRow(settings.rows[0]);
+  // 파생 필드: 입력된 방 천장 중 최저값. 키 큰 가구의 '세울 수 있나' 경고에 쓴다.
+  const min = ceiling.rows[0]?.min_ceiling;
+  out.min_ceiling_height_cm = min === null || min === undefined ? null : Number(min);
+  return out;
 }
 
 export async function saveHomeSettings(pool, value) {
@@ -38,5 +46,5 @@ export async function saveHomeSettings(pool, value) {
     `UPDATE home_settings SET ${sets.join(', ')} WHERE id = $${i} RETURNING *`,
     vals
   );
-  return rows[0] ? normalizeHomeSettingsRow(rows[0]) : null;
+  return rows[0] ? getHomeSettings(pool) : null; // 파생 필드 포함해 동일한 형태로 반환
 }
