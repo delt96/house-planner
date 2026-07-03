@@ -6,6 +6,7 @@ import { catKey, catColor, CATEGORY_META } from '../categories.js';
 import { CategoryIcon } from '../icons.jsx';
 import { Tabs } from '../Tabs.jsx';
 import { RoomCard } from '../RoomCard.jsx';
+import { FeatureSymbols } from '../FeatureSymbols.jsx';
 
 const MARGIN_CM = 60;
 
@@ -142,6 +143,7 @@ export function LayoutPage() {
                   <text x={cmToPx(r.x) + 6} y={cmToPx(r.y) + 16} className="room-label">
                     {r.name} ({r.width_cm}×{r.depth_cm})
                   </text>
+                  <FeatureSymbols room={r} selectedId={selectedFeature} onSelect={selectFeature} />
                 </g>
               );
             })}

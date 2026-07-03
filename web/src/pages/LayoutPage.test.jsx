@@ -113,3 +113,23 @@ test('room card lists features and saves ceiling height', async () => {
   await userEvent.tab();
   await waitFor(() => expect(api.updateRoom).toHaveBeenCalledWith(1, { ceiling_height_cm: '240' }));
 });
+
+test('renders wall feature symbols and toggles the info chip on click', async () => {
+  api.getLayout.mockResolvedValue({
+    rooms: [{ id: 1, name: '거실', x: 0, y: 0, width_cm: 400, depth_cm: 500, ceiling_height_cm: null, features: [
+      { id: 11, kind: 'window', wall: 'N', offset_cm: 90, width_cm: 180, height_cm: 120, sill_height_cm: 90, floor_height_cm: null, swing: null },
+      { id: 12, kind: 'door', wall: 'S', offset_cm: 30, width_cm: 80, height_cm: 204, sill_height_cm: null, floor_height_cm: null, swing: 'in-left' },
+      { id: 13, kind: 'outlet', wall: 'E', offset_cm: 150, width_cm: null, height_cm: null, sill_height_cm: null, floor_height_cm: 30, swing: null },
+    ] }],
+    placements: [], palette: [], unplaceable: [],
+  });
+  render(<MemoryRouter><LayoutPage /></MemoryRouter>);
+  const win = await screen.findByTestId('feat-11');
+  expect(screen.getByTestId('feat-12')).toBeInTheDocument();
+  expect(screen.getByTestId('feat-13')).toBeInTheDocument();
+  expect(screen.queryByText('W180 · H120 · 턱90')).not.toBeInTheDocument();
+  fireEvent.click(win);
+  expect(screen.getByText('W180 · H120 · 턱90')).toBeInTheDocument();
+  fireEvent.click(win); // clicking again closes the chip
+  expect(screen.queryByText('W180 · H120 · 턱90')).not.toBeInTheDocument();
+});
