@@ -46,3 +46,12 @@ test('PUT rejects a non-positive dimension', async () => {
   expect(res.status).toBe(400);
   expect(res.body.error).toMatch(/door_width_cm/);
 });
+
+test('PUT stores the room door (실내 문) dimensions', async () => {
+  const { app } = createTestApp();
+  const res = await request(app).put('/api/home-settings').send({ room_door_width_cm: 75, room_door_height_cm: 198 });
+  expect(res.status).toBe(200);
+  expect(res.body).toMatchObject({ room_door_width_cm: 75, room_door_height_cm: 198 });
+  const again = await request(app).get('/api/home-settings');
+  expect(again.body).toMatchObject({ room_door_width_cm: 75, room_door_height_cm: 198 });
+});

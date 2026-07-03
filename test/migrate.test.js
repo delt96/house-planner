@@ -21,6 +21,7 @@ test('fresh DB: applies all migrations and records them', async () => {
     '003_item_category.sql',
     '004_home_settings.sql',
     '005_candidate_brand.sql',
+    '007_room_door.sql',
   ]);
   await pool.query('SELECT * FROM items');
   await pool.query('SELECT * FROM rooms');
@@ -31,7 +32,7 @@ test('re-running is an idempotent no-op', async () => {
   await runMigrations(pool);
   await runMigrations(pool); // must not throw
   const { rows } = await pool.query('SELECT filename FROM schema_migrations');
-  expect(rows).toHaveLength(5);
+  expect(rows).toHaveLength(6);
 });
 
 test('pre-existing (pre-tracking) DB is back-filled, not re-run', async () => {
@@ -47,6 +48,7 @@ test('pre-existing (pre-tracking) DB is back-filled, not re-run', async () => {
     '003_item_category.sql',
     '004_home_settings.sql',
     '005_candidate_brand.sql',
+    '007_room_door.sql',
   ]);
   await pool.query('SELECT * FROM rooms'); // 002 did run
 });

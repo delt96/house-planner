@@ -99,6 +99,8 @@ export function normalizeRoomInput(body, { partial = false } = {}) {
 const HOME_SETTING_FIELDS = [
   'door_width_cm',
   'door_height_cm',
+  'room_door_width_cm',
+  'room_door_height_cm',
   'elevator_door_width_cm',
   'elevator_door_height_cm',
   'elevator_car_width_cm',
