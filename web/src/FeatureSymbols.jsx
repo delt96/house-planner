@@ -36,10 +36,11 @@ export function FeatureSymbol({ room, feature: f, selected = false, onClick, onM
   );
 }
 
-// A room's attachments. Selection/click handling is owned by LayoutPage.
-export function FeatureSymbols({ room, selectedId = null, onSelect = () => {} }) {
+// A room's attachments. Selection and dragging are decided by LayoutPage on
+// mouseup (tiny move = click), so symbols only report mousedown.
+export function FeatureSymbols({ room, selectedId = null, onFeatureDown = () => {} }) {
   return (room.features ?? []).map((f) => (
     <FeatureSymbol key={f.id} room={room} feature={f} selected={selectedId === f.id}
-      onClick={(e) => { e.stopPropagation(); onSelect(f.id); }} />
+      onMouseDown={(e) => onFeatureDown(f, room, e)} />
   ));
 }

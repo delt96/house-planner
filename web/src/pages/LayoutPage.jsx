@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation, nearestWallPoint, clampFeatureOffset, wallSegment } from '../geometry.js';
@@ -39,6 +39,8 @@ export function LayoutPage() {
 
   const [mode, setMode] = useState(null); // null | 'door' | 'window' | 'outlet'
   const [ghost, setGhost] = useState(null); // { roomId, wall, offset_cm, fits } | null
+  const [featDrag, setFeatDrag] = useState(null); // { id, roomId, startX, startY, wall, offset_cm, width, moved }
+  const suppressClick = useRef(false); // swallow the synthetic click right after a feature mouseup
 
   function toggleMode(kind) {
     setMode((m) => (m === kind ? null : kind));
@@ -73,6 +75,39 @@ export function LayoutPage() {
       await load();
       setSelectedFeature(created.id);
     } catch (err) { setError(err.message); }
+  }
+
+  function startFeatDrag(f, room, e) {
+    if (mode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setFeatDrag({
+      id: f.id, roomId: room.id, startX: e.clientX, startY: e.clientY,
+      wall: f.wall, offset_cm: Number(f.offset_cm), width: Number(f.width_cm ?? 0), moved: false,
+    });
+  }
+
+  function moveFeatDrag(e) {
+    const { x, y } = canvasCm(e);
+    setFeatDrag((d) => {
+      if (!d) return d;
+      const moved = d.moved || Math.abs(e.clientX - d.startX) + Math.abs(e.clientY - d.startY) >= 3;
+      const room = layout.rooms.find((r) => r.id === d.roomId);
+      const hit = nearestWallPoint([room], x, y, 80);
+      if (!hit) return { ...d, moved };
+      const offset = clampFeatureOffset(room, hit.wall, snapCm(hit.offsetCm - d.width / 2, 5), d.width);
+      return { ...d, moved, wall: hit.wall, offset_cm: offset };
+    });
+  }
+
+  async function endFeatDrag() {
+    const d = featDrag;
+    setFeatDrag(null);
+    if (!d) return;
+    suppressClick.current = true;
+    if (!d.moved) return selectFeature(d.id);
+    try { setError(null); await api.updateFeature(d.id, { wall: d.wall, offset_cm: d.offset_cm }); await load(); }
+    catch (err) { setError(err.message); }
   }
 
   function startDrag(kind, id, e) {
@@ -186,12 +221,19 @@ export function LayoutPage() {
               viewBox={`0 0 ${cw} ${ch}`}
               role="img"
               aria-label="평면도"
-              onMouseMove={mode ? moveGhost : moveDrag}
-              onMouseUp={endDrag}
+              onMouseMove={mode ? moveGhost : featDrag ? moveFeatDrag : moveDrag}
+              onMouseUp={featDrag ? endFeatDrag : endDrag}
               onMouseLeave={mode ? () => setGhost(null) : undefined}
-              onClick={mode ? placeGhost : () => setSelectedFeature(null)}
+              onClick={mode ? placeGhost : () => {
+                if (suppressClick.current) { suppressClick.current = false; return; }
+                setSelectedFeature(null);
+              }}
             >
               {rooms.map((r) => {
+                const dr = featDrag && featDrag.roomId === r.id
+                  ? { ...r, features: (r.features ?? []).map((f) =>
+                      f.id === featDrag.id ? { ...f, wall: featDrag.wall, offset_cm: featDrag.offset_cm } : f) }
+                  : r;
                 const off = liveOffset('room', r.id);
                 return (
                   <g key={`room-${r.id}`} transform={`translate(${off.dx} ${off.dy})`}>
@@ -201,7 +243,10 @@ export function LayoutPage() {
                     <text x={cmToPx(r.x) + 6} y={cmToPx(r.y) + 16} className="room-label">
                       {r.name} ({r.width_cm}×{r.depth_cm})
                     </text>
-                    <FeatureSymbols room={r} selectedId={selectedFeature} onSelect={selectFeature} />
+                    <FeatureSymbols room={dr} selectedId={selectedFeature} onFeatureDown={startFeatDrag} />
+                    {featDrag && featDrag.roomId === r.id && featDrag.moved && (
+                      <DistanceLabels room={r} wall={featDrag.wall} offsetCm={featDrag.offset_cm} widthCm={featDrag.width} />
+                    )}
                   </g>
                 );
               })}
