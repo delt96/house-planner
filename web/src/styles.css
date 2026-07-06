@@ -413,3 +413,13 @@ h1.display { font-size: 22px; }
 .feat-sym.selected .outlet-dot { stroke: var(--ink); stroke-width: 2; }
 .feat-chip { font: 600 11px var(--num); fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
 .dist-label { font: 600 10px var(--num); fill: var(--ink-3); paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+
+.feat-toolbar { display: flex; gap: 6px; align-items: center; }
+.feat-toolbar button { font: 600 11.5px var(--sans); min-height: 0; padding: 5px 10px; border-radius: 8px; background: var(--surface-soft2); color: var(--ink-2); }
+.feat-toolbar button:hover { background: var(--chip); }
+.feat-toolbar button.active { background: var(--ink); color: #fff; }
+.feat-toolbar-hint { font: 500 11px var(--sans); color: var(--ink-4); }
+
+.feat-ghost { opacity: 0.55; pointer-events: none; }
+.feat-ghost.invalid .door-arc, .feat-ghost.invalid .win-line { stroke: var(--danger); }
+.feat-ghost.invalid .outlet-dot { fill: var(--danger); }

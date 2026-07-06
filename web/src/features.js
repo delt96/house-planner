@@ -12,6 +12,13 @@ export const FEATURE_META = {
   outlet: { label: '콘센트', icon: '⚡' },
 };
 
+// Default dimensions when stamping a new feature on the plan (typical KR sizes).
+export const FEATURE_DEFAULTS = {
+  door: { width_cm: 80, height_cm: 204, swing: 'in-left' },
+  window: { width_cm: 150, height_cm: 120, sill_height_cm: 90 },
+  outlet: { floor_height_cm: 30 },
+};
+
 // One-line panel summary: "남쪽 · 모서리 30cm · 폭80 · 높이204 · 안·좌"
 export function featureSummary(f) {
   const parts = [WALL_LABEL[f.wall], `모서리 ${f.offset_cm}cm`];

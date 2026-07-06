@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation } from '../geometry.js';
+import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation, nearestWallPoint, clampFeatureOffset } from '../geometry.js';
 import { catKey, catColor, CATEGORY_META } from '../categories.js';
 import { CategoryIcon } from '../icons.jsx';
 import { Tabs } from '../Tabs.jsx';
 import { RoomCard } from '../RoomCard.jsx';
-import { FeatureSymbols } from '../FeatureSymbols.jsx';
+import { FeatureSymbols, FeatureSymbol } from '../FeatureSymbols.jsx';
+import { FeatureToolbar } from '../FeatureToolbar.jsx';
+import { DistanceLabels } from '../DistanceLabels.jsx';
+import { FEATURE_DEFAULTS } from '../features.js';
 
 const MARGIN_CM = 60;
 
@@ -33,7 +36,46 @@ export function LayoutPage() {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const selectFeature = (id) => setSelectedFeature((cur) => (cur === id ? null : id));
 
+  const [mode, setMode] = useState(null); // null | 'door' | 'window' | 'outlet'
+  const [ghost, setGhost] = useState(null); // { roomId, wall, offset_cm, fits } | null
+
+  function toggleMode(kind) {
+    setMode((m) => (m === kind ? null : kind));
+    setGhost(null);
+    setSelectedFeature(null);
+  }
+
+  // Mouse event → canvas cm coordinates (viewBox is 1:1 with px).
+  const canvasCm = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { x: pxToCm(e.clientX - rect.left), y: pxToCm(e.clientY - rect.top) };
+  };
+
+  function moveGhost(e) {
+    const { x, y } = canvasCm(e);
+    const hit = nearestWallPoint(layout.rooms, x, y, 30);
+    if (!hit) return setGhost(null);
+    const room = layout.rooms.find((r) => r.id === hit.roomId);
+    const width = FEATURE_DEFAULTS[mode].width_cm ?? 0;
+    const wallLen = hit.wall === 'N' || hit.wall === 'S' ? Number(room.width_cm) : Number(room.depth_cm);
+    const offset = clampFeatureOffset(room, hit.wall, snapCm(hit.offsetCm - width / 2, 5), width);
+    setGhost({ roomId: room.id, wall: hit.wall, offset_cm: offset, fits: width <= wallLen });
+  }
+
+  async function placeGhost() {
+    if (!ghost || !ghost.fits) return;
+    try {
+      setError(null);
+      const created = await api.createFeature(ghost.roomId, {
+        kind: mode, wall: ghost.wall, offset_cm: ghost.offset_cm, ...FEATURE_DEFAULTS[mode],
+      });
+      await load();
+      setSelectedFeature(created.id);
+    } catch (err) { setError(err.message); }
+  }
+
   function startDrag(kind, id, e) {
+    if (mode) return; // placement mode owns the canvas
     e.preventDefault();
     setDrag({ kind, id, startX: e.clientX, startY: e.clientY, dxCm: 0, dyCm: 0 });
   }
@@ -67,6 +109,17 @@ export function LayoutPage() {
     try { setLayout(await api.getLayout()); } catch (e) { setError(e.message); }
   }
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key !== 'Escape') return;
+      if (selectedFeature !== null) return setSelectedFeature(null);
+      setMode(null);
+      setGhost(null);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedFeature]);
 
   async function addRoom(e) {
     e.preventDefault();
@@ -121,7 +174,8 @@ export function LayoutPage() {
             <span className="legend-item" style={{ color: CATEGORY_META.furniture.color }}>
               <CategoryIcon category="furniture" size={15} /> 가구
             </span>
-            <span className="legend-hint">사각형을 드래그해 배치</span>
+            <FeatureToolbar mode={mode} onToggle={toggleMode} hasRooms={rooms.length > 0} />
+            <span className="legend-hint">{mode ? '' : '사각형을 드래그해 배치'}</span>
           </div>
           <svg
             className="canvas"
@@ -130,8 +184,10 @@ export function LayoutPage() {
             viewBox={`0 0 ${cw} ${ch}`}
             role="img"
             aria-label="평면도"
-            onMouseMove={moveDrag}
+            onMouseMove={mode ? moveGhost : moveDrag}
             onMouseUp={endDrag}
+            onMouseLeave={mode ? () => setGhost(null) : undefined}
+            onClick={mode ? placeGhost : undefined}
           >
             {rooms.map((r) => {
               const off = liveOffset('room', r.id);
@@ -147,6 +203,20 @@ export function LayoutPage() {
                 </g>
               );
             })}
+            {mode && ghost && (() => {
+              const room = rooms.find((r) => r.id === ghost.roomId);
+              const def = FEATURE_DEFAULTS[mode];
+              const fake = {
+                id: 'ghost', kind: mode, wall: ghost.wall, offset_cm: ghost.offset_cm,
+                width_cm: def.width_cm ?? null, swing: def.swing ?? null,
+              };
+              return (
+                <g className={`feat-ghost${ghost.fits ? '' : ' invalid'}`}>
+                  <FeatureSymbol room={room} feature={fake} />
+                  <DistanceLabels room={room} wall={ghost.wall} offsetCm={ghost.offset_cm} widthCm={def.width_cm ?? 0} />
+                </g>
+              );
+            })()}
             {placements.map((p) => {
               const f = rotatedFootprint(p.width_cm, p.depth_cm, p.rotation);
               const off = liveOffset('item', p.item_id);

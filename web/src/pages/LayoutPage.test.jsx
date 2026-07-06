@@ -133,3 +133,61 @@ test('renders wall feature symbols and toggles the info chip on click', async ()
   fireEvent.click(win); // clicking again closes the chip
   expect(screen.queryByText('W180 · H120 · 턱90')).not.toBeInTheDocument();
 });
+
+test('클릭 배치: 도구 선택 → 유령 표시 → 벽 클릭 → 기본치수로 생성', async () => {
+  api.getLayout.mockResolvedValue(LAYOUT);
+  api.createFeature.mockResolvedValue({ id: 42 });
+  render(<MemoryRouter><LayoutPage /></MemoryRouter>);
+  await screen.findByTestId('room-1');
+  await userEvent.click(screen.getByRole('button', { name: '🚪 문' }));
+  const svg = screen.getByRole('img', { name: '평면도' });
+  // cursor at cm (200, 5): near room-1's N wall → ghost centered → offset 200-40=160
+  fireEvent.mouseMove(svg, { clientX: 120, clientY: 3 });
+  expect(screen.getByTestId('feat-ghost')).toBeInTheDocument();
+  expect(screen.getAllByText('160')).toHaveLength(2); // corner distances on both sides
+  fireEvent.click(svg, { clientX: 120, clientY: 3 });
+  await waitFor(() => expect(api.createFeature).toHaveBeenCalledWith(1, {
+    kind: 'door', wall: 'N', offset_cm: 160, width_cm: 80, height_cm: 204, swing: 'in-left',
+  }));
+});
+
+test('벽에서 먼 곳에서는 유령이 없고 클릭해도 생성되지 않는다', async () => {
+  api.getLayout.mockResolvedValue(LAYOUT);
+  render(<MemoryRouter><LayoutPage /></MemoryRouter>);
+  await screen.findByTestId('room-1');
+  await userEvent.click(screen.getByRole('button', { name: '⚡ 콘센트' }));
+  const svg = screen.getByRole('img', { name: '평면도' });
+  fireEvent.mouseMove(svg, { clientX: 120, clientY: 150 }); // cm (200, 250): room center
+  expect(screen.queryByTestId('feat-ghost')).not.toBeInTheDocument();
+  fireEvent.click(svg, { clientX: 120, clientY: 150 });
+  expect(api.createFeature).not.toHaveBeenCalled();
+});
+
+test('ESC가 배치 모드를 종료한다', async () => {
+  api.getLayout.mockResolvedValue(LAYOUT);
+  render(<MemoryRouter><LayoutPage /></MemoryRouter>);
+  await screen.findByTestId('room-1');
+  await userEvent.click(screen.getByRole('button', { name: '🚪 문' }));
+  const svg = screen.getByRole('img', { name: '평면도' });
+  fireEvent.mouseMove(svg, { clientX: 120, clientY: 3 });
+  expect(screen.getByTestId('feat-ghost')).toBeInTheDocument();
+  fireEvent.keyDown(window, { key: 'Escape' });
+  expect(screen.queryByTestId('feat-ghost')).not.toBeInTheDocument();
+  fireEvent.click(svg, { clientX: 120, clientY: 3 });
+  expect(api.createFeature).not.toHaveBeenCalled();
+});
+
+test('벽보다 넓은 부착물 유령은 invalid로 표시되고 클릭이 무시된다', async () => {
+  api.getLayout.mockResolvedValue({
+    rooms: [{ id: 3, name: '팬트리', x: 0, y: 0, width_cm: 60, depth_cm: 60 }],
+    placements: [], palette: [], unplaceable: [],
+  });
+  render(<MemoryRouter><LayoutPage /></MemoryRouter>);
+  await screen.findByTestId('room-3');
+  await userEvent.click(screen.getByRole('button', { name: '🚪 문' })); // door 80 > wall 60
+  const svg = screen.getByRole('img', { name: '평면도' });
+  fireEvent.mouseMove(svg, { clientX: 18, clientY: 3 }); // cm (30, 5): N wall
+  expect(screen.getByTestId('feat-ghost').closest('g.feat-ghost')).toHaveClass('invalid');
+  fireEvent.click(svg, { clientX: 18, clientY: 3 });
+  expect(api.createFeature).not.toHaveBeenCalled();
+});
