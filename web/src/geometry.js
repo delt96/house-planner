@@ -108,7 +108,7 @@ export function snapRoomPosition(room, otherRooms, proposedX, proposedY, thresho
         { y: oy + od - d, pos: oy + od },
       ]) {
         const delta = Math.abs(proposedY - c.y);
-        if (delta <= thresholdCm && delta > 0 && (!bestY || delta < bestY.delta)) bestY = { ...c, delta, o };
+        if (delta <= thresholdCm && (!bestY || delta < bestY.delta)) bestY = { ...c, delta, o };
       }
     }
   }
