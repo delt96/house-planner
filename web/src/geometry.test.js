@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation, PX_PER_CM, wallSegment, doorArcPath, nearestWallPoint, clampFeatureOffset } from './geometry.js';
+import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation, PX_PER_CM, wallSegment, doorArcPath, nearestWallPoint, clampFeatureOffset, snapRoomPosition } from './geometry.js';
 
 test('cmToPx / pxToCm are inverse', () => {
   expect(cmToPx(100)).toBe(100 * PX_PER_CM);
@@ -78,4 +78,35 @@ test('clampFeatureOffset keeps the feature inside its wall', () => {
   expect(clampFeatureOffset(room, 'N', 350, 80)).toBe(320);
   expect(clampFeatureOffset(room, 'E', 280, 0)).toBe(280);
   expect(clampFeatureOffset(room, 'E', 310, 0)).toBe(300);
+});
+
+const ME = { id: 1, x: 0, y: 0, width_cm: 200, depth_cm: 200 };
+const NEIGHBOR = { id: 2, x: 300, y: 0, width_cm: 400, depth_cm: 300 };
+
+test('snapRoomPosition: right edge sticks flush to a neighbor left wall within 15cm', () => {
+  const r = snapRoomPosition(ME, [NEIGHBOR], 92, 100); // my right edge 292 vs their left 300
+  expect(r.x).toBe(100);
+  expect(r.snappedX).toBe(true);
+  expect(r.y).toBe(100);
+  expect(r.snappedY).toBe(false);
+  expect(r.guides).toEqual([{ axis: 'x', positionCm: 300, fromCm: 0, toCm: 300 }]);
+});
+
+test('snapRoomPosition: corners align on the perpendicular axis', () => {
+  const r = snapRoomPosition(ME, [NEIGHBOR], 100, 12); // x flush + top edges 12cm apart
+  expect(r.x).toBe(100);
+  expect(r.y).toBe(0);
+  expect(r.snappedY).toBe(true);
+  expect(r.guides).toHaveLength(2);
+});
+
+test('snapRoomPosition: no snap beyond the threshold', () => {
+  const r = snapRoomPosition(ME, [NEIGHBOR], 60, 100);
+  expect(r).toMatchObject({ x: 60, y: 100, snappedX: false, snappedY: false, guides: [] });
+});
+
+test('snapRoomPosition: far-away rooms on the perpendicular axis do not grab', () => {
+  const r = snapRoomPosition(ME, [NEIGHBOR], 92, 340); // y ranges 340~540 vs 0~300, gap > 15
+  expect(r.snappedX).toBe(false);
+  expect(r.x).toBe(92);
 });
