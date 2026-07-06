@@ -30,10 +30,12 @@ export function FeaturePropertyCard({ feature: f, room, anchor, onSaved, onClose
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const saveField = (k) => () => { if (String(f[k] ?? '') !== String(form[k])) save({ [k]: form[k] }); };
   function saveLeft() {
+    if (String(form.left).trim() === '') return;
     const n = Number(form.left);
     if (Number.isFinite(n) && n !== Number(f.offset_cm)) save({ offset_cm: n });
   }
   function saveRight() {
+    if (String(form.right).trim() === '') return;
     const n = Number(form.right);
     if (!Number.isFinite(n)) return;
     const off = wallLen - width - n;

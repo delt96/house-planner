@@ -46,12 +46,15 @@ export function LayoutPage() {
     setMode((m) => (m === kind ? null : kind));
     setGhost(null);
     setSelectedFeature(null);
+    setDrag(null);
+    setFeatDrag(null);
   }
 
-  // Mouse event → canvas cm coordinates (viewBox is 1:1 with px).
+  // Mouse event → canvas cm coordinates (viewBox units; guard k for jsdom's zero-size rect).
   const canvasCm = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    return { x: pxToCm(e.clientX - rect.left), y: pxToCm(e.clientY - rect.top) };
+    const k = rect.width > 0 ? e.currentTarget.viewBox.baseVal.width / rect.width : 1;
+    return { x: pxToCm((e.clientX - rect.left) * k), y: pxToCm((e.clientY - rect.top) * k) };
   };
 
   function moveGhost(e) {
@@ -168,6 +171,8 @@ export function LayoutPage() {
       if (selectedFeature !== null) return setSelectedFeature(null);
       setMode(null);
       setGhost(null);
+      setDrag(null);
+      setFeatDrag(null);
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
