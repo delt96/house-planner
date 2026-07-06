@@ -48,3 +48,31 @@ export function doorArcPath(room, f) {
   const r = cmToPx(f.width_cm);
   return `M ${cmToPx(free[0])} ${cmToPx(free[1])} A ${r} ${r} 0 0 ${sweep} ${cmToPx(end[0])} ${cmToPx(end[1])} L ${cmToPx(h[0])} ${cmToPx(h[1])}`;
 }
+
+// Project a cursor point (cm, canvas coords) onto the nearest wall among rooms.
+// Only walls whose parallel extent contains the cursor count; returns null when
+// every wall is farther than thresholdCm (perpendicular distance).
+export function nearestWallPoint(rooms, cmX, cmY, thresholdCm = 30) {
+  let best = null;
+  for (const room of rooms) {
+    const x = Number(room.x), y = Number(room.y);
+    const w = Number(room.width_cm), d = Number(room.depth_cm);
+    const candidates = [
+      { wall: 'N', dist: Math.abs(cmY - y), offset: cmX - x, inRange: cmX >= x && cmX <= x + w },
+      { wall: 'S', dist: Math.abs(cmY - (y + d)), offset: cmX - x, inRange: cmX >= x && cmX <= x + w },
+      { wall: 'W', dist: Math.abs(cmX - x), offset: cmY - y, inRange: cmY >= y && cmY <= y + d },
+      { wall: 'E', dist: Math.abs(cmX - (x + w)), offset: cmY - y, inRange: cmY >= y && cmY <= y + d },
+    ];
+    for (const c of candidates) {
+      if (!c.inRange || c.dist > thresholdCm) continue;
+      if (!best || c.dist < best.dist) best = { roomId: room.id, wall: c.wall, offsetCm: c.offset, dist: c.dist };
+    }
+  }
+  return best ? { roomId: best.roomId, wall: best.wall, offsetCm: best.offsetCm } : null;
+}
+
+// Clamp a feature of widthCm so it stays fully on the wall: [0, wallLen - widthCm].
+export function clampFeatureOffset(room, wall, offsetCm, widthCm = 0) {
+  const wallLen = wall === 'N' || wall === 'S' ? Number(room.width_cm) : Number(room.depth_cm);
+  return Math.min(Math.max(offsetCm, 0), Math.max(wallLen - widthCm, 0));
+}

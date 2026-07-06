@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation, PX_PER_CM, wallSegment, doorArcPath } from './geometry.js';
+import { cmToPx, pxToCm, snapCm, rotatedFootprint, nextRotation, PX_PER_CM, wallSegment, doorArcPath, nearestWallPoint, clampFeatureOffset } from './geometry.js';
 
 test('cmToPx / pxToCm are inverse', () => {
   expect(cmToPx(100)).toBe(100 * PX_PER_CM);
@@ -49,4 +49,33 @@ test('doorArcPath: out-right flips both hinge and direction', () => {
   const f = { kind: 'door', wall: 'S', offset_cm: 100, width_cm: 80, swing: 'out-right' };
   // hinge (180,300), free (100,300), outward (+y) -> end (180,380)
   expect(doorArcPath(room, f)).toBe('M 60 180 A 48 48 0 0 0 108 228 L 108 180');
+});
+
+const NEAR_ROOM = { id: 1, x: 100, y: 50, width_cm: 400, depth_cm: 300 };
+
+test('nearestWallPoint projects the cursor onto the closest wall', () => {
+  expect(nearestWallPoint([NEAR_ROOM], 250, 60)).toEqual({ roomId: 1, wall: 'N', offsetCm: 150 });
+  expect(nearestWallPoint([NEAR_ROOM], 110, 200)).toEqual({ roomId: 1, wall: 'W', offsetCm: 150 });
+  expect(nearestWallPoint([NEAR_ROOM], 495, 200)).toEqual({ roomId: 1, wall: 'E', offsetCm: 150 });
+  expect(nearestWallPoint([NEAR_ROOM], 250, 340)).toEqual({ roomId: 1, wall: 'S', offsetCm: 150 });
+});
+
+test('nearestWallPoint returns null beyond the threshold or outside the wall extent', () => {
+  expect(nearestWallPoint([NEAR_ROOM], 250, 200, 30)).toBeNull(); // room center
+  expect(nearestWallPoint([NEAR_ROOM], 250, 10, 30)).toBeNull();  // 40cm above N wall
+  expect(nearestWallPoint([NEAR_ROOM], 600, 60, 30)).toBeNull();  // past the NE corner
+  expect(nearestWallPoint([NEAR_ROOM], 250, 80, 30)).toEqual({ roomId: 1, wall: 'N', offsetCm: 150 }); // exactly 30cm
+});
+
+test('nearestWallPoint picks the closest wall across multiple rooms', () => {
+  const other = { id: 2, x: 600, y: 50, width_cm: 200, depth_cm: 200 };
+  expect(nearestWallPoint([NEAR_ROOM, other], 610, 150)).toEqual({ roomId: 2, wall: 'W', offsetCm: 100 });
+});
+
+test('clampFeatureOffset keeps the feature inside its wall', () => {
+  const room = { width_cm: 400, depth_cm: 300 };
+  expect(clampFeatureOffset(room, 'N', -10, 80)).toBe(0);
+  expect(clampFeatureOffset(room, 'N', 350, 80)).toBe(320);
+  expect(clampFeatureOffset(room, 'E', 280, 0)).toBe(280);
+  expect(clampFeatureOffset(room, 'E', 310, 0)).toBe(300);
 });
